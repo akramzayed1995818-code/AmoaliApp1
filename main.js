@@ -1,131 +1,144 @@
-// main.js
+// public/main.js
 
-// 1. كائن تهيئة Firebase الخاص بمشروعك (amoali2)
-// هذا الكود هو الذي قدمته لي سابقاً، وهو ضروري لربط تطبيقك بـ Firebase
+// 1. معلومات تهيئة مشروع Firebase الخاص بك
+// تم تحديث هذه القيم ببيانات مشروعك amoali2
 const firebaseConfig = {
-  apiKey: "AIzaSyBa100lc6QEu0GtII4ABZAvIVrnfmcvJgY",
-  authDomain: "amoali2.firebaseapp.com",
-  projectId: "amoali2",
-  storageBucket: "amoali2.firebasestorage.app",
-  messagingSenderId: "438355821517",
-  appId: "1:438355821517:web:2498ac45e0cc839ff37a84",
-  measurementId: "G-6MSLB0DD1B" // اختياري إذا لم تستخدم Google Analytics
+    apiKey: "AIzaSyBa100lc6QEu0GtII4ABZAvIVrnfmcvJgY",
+    authDomain: "amoali2.firebaseapp.com",
+    projectId: "amoali2",
+    storageBucket: "amoali2.firebasestorage.app",
+    messagingSenderId: "438355821517",
+    appId: "1:438355821517:web:2498ac45e0cc839ff37a84",
+    measurementId: "G-6MSLB0DD1B"
 };
 
-// 2. تهيئة تطبيق Firebase
-// بما أننا نستخدم -compat.js، فإن الكائن 'firebase' سيكون متاحاً عالمياً.
+// 2. تهيئة Firebase
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth(); // الحصول على خدمة المصادقة
 
-// 3. الحصول على عناصر DOM (واجهة المستخدم)
-const authStatusElement = document.getElementById('authStatus');
-const loginSection = document.getElementById('loginSection');
-const registerSection = document.getElementById('registerSection');
-const resetPasswordSection = document.getElementById('resetPasswordSection');
+// الحصول على مثيل Auth
+const auth = firebase.auth();
+
+// 3. الحصول على عناصر الواجهة (UI Elements) من HTML
+const authStatus = document.getElementById('authStatus');
 const loggedInSection = document.getElementById('loggedInSection');
-const userEmailElement = document.getElementById('userEmail');
-
-const loginForm = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-const resetPasswordForm = document.getElementById('resetPasswordForm');
-
-const showRegisterLink = document.getElementById('showRegister');
-const showResetPasswordLink = document.getElementById('showResetPassword');
-const showLoginFromRegisterLink = document.getElementById('showLoginFromRegister');
-const showLoginFromResetLink = document.getElementById('showLoginFromReset');
+const userEmailSpan = document.getElementById('userEmail');
 const signOutBtn = document.getElementById('signOutBtn');
 
-// 4. وظيفة لعرض الرسائل (نجاح أو خطأ)
+const loginSection = document.getElementById('loginSection');
+const loginForm = document.getElementById('loginForm');
+const loginEmail = document.getElementById('loginEmail');
+const loginPassword = document.getElementById('loginPassword');
+const showRegisterLink = document.getElementById('showRegister');
+const showResetPasswordLink = document.getElementById('showResetPassword');
+
+const registerSection = document.getElementById('registerSection');
+const registerForm = document.getElementById('registerForm');
+const registerEmail = document.getElementById('registerEmail');
+const registerPassword = document.getElementById('registerPassword');
+const showLoginFromRegisterLink = document.getElementById('showLoginFromRegister');
+
+const resetPasswordSection = document.getElementById('resetPasswordSection');
+const resetPasswordForm = document.getElementById('resetPasswordForm');
+const resetEmail = document.getElementById('resetEmail');
+const showLoginFromResetLink = document.getElementById('showLoginFromReset');
+
+// 4. وظيفة لعرض الرسائل
 function displayMessage(message, type) {
-    authStatusElement.textContent = message;
-    authStatusElement.className = `message ${type}`;
+    authStatus.textContent = message;
+    authStatus.className = `message ${type}`; // يضيف كلاس success أو error
+    authStatus.style.display = 'block'; // للتأكد من ظهورها
 }
 
-// 5. وظيفة لتبديل عرض الأقسام المختلفة
+// 5. وظيفة لتبديل عرض الأقسام
 function showSection(sectionId) {
-    const sections = [loginSection, registerSection, resetPasswordSection, loggedInSection];
+    const sections = [loggedInSection, loginSection, registerSection, resetPasswordSection];
     sections.forEach(section => {
         section.classList.remove('active');
     });
     document.getElementById(sectionId).classList.add('active');
-    // مسح الرسائل عند التبديل بين الأقسام
-    displayMessage('', ''); 
+    authStatus.style.display = 'none'; // إخفاء الرسائل عند التبديل بين الأقسام
 }
 
-// 6. الاستماع إلى تغيير حالة المصادقة (هل المستخدم مسجل دخول أم لا)
-// استخدام firebase.auth().onAuthStateChanged بدلاً من onAuthStateChanged المستورد
-auth.onAuthStateChanged((user) => {
+// 6. الاستماع لتغييرات حالة المصادقة (مهم جداً لتحديث الواجهة)
+auth.onAuthStateChanged(function(user) {
     if (user) {
-        // المستخدم مسجل دخول
-        userEmailElement.textContent = user.email;
+        // المستخدم مسجل الدخول
+        userEmailSpan.textContent = user.email;
         showSection('loggedInSection');
-        displayMessage('تم تسجيل الدخول بنجاح.', 'success');
+        displayMessage(`أهلاً بك، ${user.email}!`, 'success');
     } else {
-        // المستخدم غير مسجل دخول
+        // لا يوجد مستخدم مسجل الدخول
         showSection('loginSection');
-        displayMessage('الرجاء تسجيل الدخول أو إنشاء حساب جديد.', '');
+        displayMessage('الرجاء تسجيل الدخول أو إنشاء حساب.', 'info');
     }
 });
 
-// 7. معالجة نموذج تسجيل الدخول
+// 7. التعامل مع تسجيل الدخول
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault(); // منع إعادة تحميل الصفحة
-    const email = loginForm.loginEmail.value;
-    const password = loginForm.loginPassword.value;
+    const email = loginEmail.value;
+    const password = loginPassword.value;
 
     try {
-        // استخدام firebase.auth().signInWithEmailAndPassword
         await auth.signInWithEmailAndPassword(email, password);
-        // الحالة ستتم معالجتها بواسطة onAuthStateChanged
+        // onAuthStateChanged سيتكفل بتحديث الواجهة
+        displayMessage('تم تسجيل الدخول بنجاح!', 'success');
+        loginEmail.value = ''; // مسح الحقول بعد التسجيل
+        loginPassword.value = '';
     } catch (error) {
+        console.error("خطأ في تسجيل الدخول:", error);
         displayMessage(`خطأ في تسجيل الدخول: ${error.message}`, 'error');
     }
 });
 
-// 8. معالجة نموذج تسجيل حساب جديد
+// 8. التعامل مع تسجيل حساب جديد
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = registerForm.registerEmail.value;
-    const password = registerForm.registerPassword.value;
+    const email = registerEmail.value;
+    const password = registerPassword.value;
 
     try {
-        // استخدام firebase.auth().createUserWithEmailAndPassword
         await auth.createUserWithEmailAndPassword(email, password);
-        // الحالة ستتم معالجتها بواسطة onAuthStateChanged
+        // onAuthStateChanged سيتكفل بتحديث الواجهة
+        displayMessage('تم إنشاء الحساب بنجاح وتسجيل الدخول!', 'success');
+        registerEmail.value = ''; // مسح الحقول بعد التسجيل
+        registerPassword.value = '';
     } catch (error) {
-        displayMessage(`خطأ في تسجيل الحساب: ${error.message}`, 'error');
+        console.error("خطأ في إنشاء الحساب:", error);
+        displayMessage(`خطأ في إنشاء الحساب: ${error.message}`, 'error');
     }
 });
 
-// 9. معالجة نموذج استعادة كلمة المرور
-resetPasswordForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = resetPasswordForm.resetEmail.value;
-
-    try {
-        // استخدام firebase.auth().sendPasswordResetEmail
-        await auth.sendPasswordResetEmail(email);
-        displayMessage('تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد.', 'success');
-        resetPasswordForm.reset(); // مسح حقل البريد الإلكتروني
-    } catch (error) {
-        displayMessage(`خطأ في إرسال رابط الاستعادة: ${error.message}`, 'error');
-    }
-});
-
-// 10. معالجة زر تسجيل الخروج
+// 9. التعامل مع تسجيل الخروج
 signOutBtn.addEventListener('click', async () => {
     try {
-        // استخدام firebase.auth().signOut
         await auth.signOut();
+        // onAuthStateChanged سيتكفل بتحديث الواجهة
         displayMessage('تم تسجيل الخروج بنجاح.', 'success');
-        // onAuthStateChanged سيتكفل بالعودة لواجهة تسجيل الدخول
     } catch (error) {
+        console.error("خطأ في تسجيل الخروج:", error);
         displayMessage(`خطأ في تسجيل الخروج: ${error.message}`, 'error');
     }
 });
 
-// 11. أزرار التبديل بين الأقسام
+// 10. التعامل مع استعادة كلمة المرور
+resetPasswordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = resetEmail.value;
+
+    try {
+        await auth.sendPasswordResetEmail(email);
+        displayMessage('تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني.', 'success');
+        resetEmail.value = ''; // مسح الحقل
+        showSection('loginSection'); // العودة لصفحة تسجيل الدخول
+    } catch (error) {
+        console.error("خطأ في إرسال رابط الاستعادة:", error);
+        displayMessage(`خطأ: ${error.message}`, 'error');
+    }
+});
+
+// 11. إضافة مستمعي الأحداث لتبديل الأقسام
 showRegisterLink.addEventListener('click', () => showSection('registerSection'));
-showResetPasswordLink.addEventListener('click', () => showSection('resetPasswordSection'));
 showLoginFromRegisterLink.addEventListener('click', () => showSection('loginSection'));
+showResetPasswordLink.addEventListener('click', () => showSection('resetPasswordSection'));
 showLoginFromResetLink.addEventListener('click', () => showSection('loginSection'));
